@@ -26,24 +26,32 @@ IGNORE_TAG          $IGNORE_TAG
 EXTRA_TAR_OPTIONS:  $EXTRA_TAR_OPTIONS
 "
 
-echo "backup running..."
-$TAR -cvpzf "$TMP_DIR/dirbak-$DATETIME.tgz" $EXTRA_TAR_OPTIONS --exclude-from=$IGNORE_GLOBAL --exclude-tag-all=$IGNORE_TAG $SOURCE_DIR
-if [ ! -f "$BACKUP_PASS" ]; then
-  echo "Generating $BACKUP_PASS file"
-  openssl rand -hex 32 > $BACKUP_PASS
-fi
-echo "encrypting archive"
-openssl aes-256-cbc -salt -in "$TMP_DIR/dirbak-$DATETIME.tgz" -out "$TMP_DIR/dirbak-$DATETIME.tgz.enc" -k $BACKUP_PASS
-echo "copying encrypted archive to $TARGET_DIR"
-$RSYNC -zvh "$TMP_DIR/dirbak-$DATETIME.tgz.enc" $TARGET_DIR
-echo ""
-if [ ! -f "$TARGET_DIR/$dirbak-$DATETIME.tgz.enc" ]; then
-  echo "backup missing in $TARGET_DIR. Please check the logs."
+if [ ! -d "$TARGET_DIR" ]; then
+  echo "$TARGET_DIR is missing or not mounted."
 else
-  echo "backup successful stored @ $TARGET_DIR/dirbak-$DATETIME.tgz.enc"
+  echo "backup running..."
+  $TAR -cvpzf "$TMP_DIR/dirbak-$DATETIME.tgz" $EXTRA_TAR_OPTIONS --exclude-from=$IGNORE_GLOBAL --exclude-tag-all=$IGNORE_TAG $SOURCE_DIR
+  if [ ! -f "$BACKUP_PASS" ]; then
+    echo "Generating $BACKUP_PASS file"
+    openssl rand -hex 32 > $BACKUP_PASS
+  fi
+  echo "encrypting archive"
+  openssl aes-256-cbc -salt -in "$TMP_DIR/dirbak-$DATETIME.tgz" -out "$TMP_DIR/dirbak-$DATETIME.tgz.enc" -k $BACKUP_PASS
+  if [ ! -d "$TARGET_DIR/" ]; then
+    echo "$TARGET_DIR is missing or not mounted. backup can be copied."
+  else
+    echo "copying encrypted archive to $TARGET_DIR"
+    $RSYNC -zvh "$TMP_DIR/dirbak-$DATETIME.tgz.enc" $TARGET_DIR
+  fi
+  echo ""
+  if [ ! -f "$TARGET_DIR/dirbak-$DATETIME.tgz.enc" ]; then
+    echo "backup missing in $TARGET_DIR. Please check the logs."
+  else
+    echo "backup successful stored @ $TARGET_DIR/dirbak-$DATETIME.tgz.enc"
+  fi
+  echo "Cleanup temp files, backups and logs older then $BACKUP_RETENTION days."
+  rm -rf "/tmp/dirbak-*"
+  rm -f $(ls -1t $TARGET_DIR/dirbak-* | tail -n +$BACKUP_RETENTION)
+  rm -f $(ls -1t $HOME/.logs/dirbak-* | tail -n +$BACKUP_RETENTION)
+  echo "backup of $SOURCE_DIR done @ $DATETIME"
 fi
-echo "Cleanup temp files, backups and logs older then $BACKUP_RETENTION days."
-rm -rf "/tmp/dirbak-*"
-rm -f $(ls -1t $TARGET_DIR/dirbak-* | tail -n +$BACKUP_RETENTION)
-rm -f $(ls -1t $HOME/.logs/dirbak-* | tail -n +$BACKUP_RETENTION)
-echo "backup of $SOURCE_DIR done @ $DATETIME"
