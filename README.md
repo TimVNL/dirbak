@@ -2,7 +2,7 @@
 
 dirbak uses cron, openssl, rsync and tar to make daily backups
 
-## Installation on OS X
+## installation on MacOS
 
 ```bash
 # move to dirbak repo to you home folder
@@ -24,7 +24,7 @@ crontab -e
 00  17  *  *  1-5  /Users/<user>/.dirbak/backup.sh > /Users/<user>/.logs/dirbak-$(date +\%Y\%m\%d) 2>&1
 ```
 
-## Installation on Linux
+## installation on Linux
 
 ```bash
 # move to dirbak repo to you home folder
@@ -43,9 +43,9 @@ crontab -e
 00  17  *  *  1-5  /Users/<user>/.dirbak/backup.sh > /Users/<user>/.logs/dirbak-$(date +\%Y\%m\%d) 2>&1
 ```
 
-## Decypt backups
+## decypt backups
 
 ```bash
 # Do the following command in the .dirbak folder
-./decypt <name-of-encrypted-file> <name-of-decrypted-file> <location-to-tarpass-file>
+./decypt.sh <name-of-encrypted-file> <name-of-decrypted-file> <location-to-tarpass-file>
 ```
